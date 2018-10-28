@@ -1,3 +1,3 @@
 package backend
 
-type Driver struct{}
+type Driver interface{}

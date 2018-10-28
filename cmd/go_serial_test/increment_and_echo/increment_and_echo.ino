@@ -3,7 +3,7 @@ void setup() {
 }
 
 void loop() {
-  if (Serial.available() > 0) {
+  if (Serial.available()) {
     const uint8_t incoming_byte = Serial.read();
     Serial.write(incoming_byte + 1);
   }
