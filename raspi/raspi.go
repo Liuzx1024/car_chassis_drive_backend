@@ -119,4 +119,5 @@ func init() {
 	}
 	Raspi.gpioMapMutex = new(sync.RWMutex)
 	Raspi.gpioMap = make(map[uint8]*DigitalPin)
+	ioMutex=new(sync.Mutex)
 }
