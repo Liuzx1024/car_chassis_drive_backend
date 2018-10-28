@@ -6,6 +6,8 @@ import (
 	"strconv"
 )
 
+var ioMutex *sync.Mutex
+
 func generateGPIODirectoryFilePath(pin uint8) string {
 	return _GPIOClassPath + "gpio" + pinUint8ToString(pin) + "/"
 }
@@ -76,6 +78,8 @@ func valueUint8ToString(value uint8) (string, error) {
 // Only use these functions in a critical scope!!!
 // https://www.kernel.org/doc/Documentation/gpio/sysfs.txt
 func exportPin(pin uint8) error {
+	ioMutex.Lock()
+	defer ioMutex.Unlock()
 	exportFile, err := os.OpenFile(_GPIOExportFilePath, os.O_WRONLY, os.ModeType)
 	defer func() {
 		if exportFile != nil {
@@ -93,6 +97,8 @@ func exportPin(pin uint8) error {
 }
 
 func unexportPin(pin uint8) error {
+	ioMutex.Lock()
+	defer ioMutex.Unlock()
 	unexportFile, err := os.OpenFile(_GPIOUnexportFilePath, os.O_WRONLY, os.ModeType)
 	defer func() {
 		if unexportFile != nil {
@@ -110,6 +116,8 @@ func unexportPin(pin uint8) error {
 }
 
 func digitalWrite(pin, value uint8) error {
+	ioMutex.Lock()
+	defer ioMutex.Unlock()
 	valueString, err := valueUint8ToString(value)
 	if err != nil {
 		return err
@@ -134,6 +142,8 @@ func digitalRead(pin uint8) (uint8, error) {
 }
 
 func setPinMode(pin uint8, mode uint8) error {
+	ioMutex.Lock()
+	defer ioMutex.Unlock()
 	modeString, err := modeUint8ToString(mode)
 	if err != nil {
 		return err
@@ -146,6 +156,8 @@ func setPinMode(pin uint8, mode uint8) error {
 }
 
 func getPinMode(pin uint8) (uint8, error) {
+	ioMutex.Lock()
+	defer ioMutex.Unlock()
 	data, err := ioutil.ReadFile(generateGpioDirectionFilePath(pin))
 	if err != nil {
 		return emptyMode, err
@@ -154,6 +166,8 @@ func getPinMode(pin uint8) (uint8, error) {
 }
 
 func isPinExported(pin uint8) bool {
+	ioMutex.Lock()
+	defer ioMutex.Unlock()
 	_, err := os.Stat(generateGPIODirectoryFilePath(pin))
 	return os.IsExist(err)
 }
