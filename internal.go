@@ -17,7 +17,6 @@ func init() {
 		globalDeviceTree.lock = new(sync.RWMutex)
 		globalDeviceTree.lock.Lock()
 		globalDeviceTree.nodeList = new(list.List).Init()
-		globalDeviceTree.nodeMapByName = make(map[string]*list.Element)
 		globalDeviceTree.nodeMapByUUID = make(map[uuid.UUID]*list.Element)
 	}()
 }

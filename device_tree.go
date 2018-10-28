@@ -7,45 +7,38 @@ import (
 	"sync"
 )
 
+const emptyString = ""
+
 type _globalDeviceTree struct {
 	nodeList      *list.List
 	nodeMapByUUID map[uuid.UUID]*list.Element
-	nodeMapByName map[string]*list.Element
 	lock          *sync.RWMutex
 }
 
 var globalDeviceTree *_globalDeviceTree
 
 var errGlobalDeviceTreeHasSameUUID = errors.New("errGlobalDeviceTreeHasSameUUID")
-var errGlobalDeviceTreeHasSameName = errors.New("errGlobalDeviceTreeHasSameName")
 var errGlobalDeviceTreeDontHaveThisNode = errors.New("errGlobalDeviceTreeDontHaveThisNode")
 
-func (_this *_globalDeviceTree) newNode(name string) (*node, error) {
+func (_this *_globalDeviceTree) newNode() (*node, error) {
 	_this.lock.Lock()
-	aNewUUID, err := uuid.NewV4()
-	if err != nil {
+	if aNewUUID, err := uuid.NewV4(); err != nil {
 		return nil, err
-	}
-	_, ok := _this.nodeMapByUUID[aNewUUID]
-	if ok {
+	} else if _, ok := _this.nodeMapByUUID[aNewUUID]; ok {
 		return nil, errGlobalDeviceTreeHasSameUUID
+	} else {
+		aNewNode := &node{
+			lock:     new(sync.RWMutex),
+			im:       aNewUUID,
+			subNodes: []uuid.UUID{},
+			useable:  true,
+		}
+		aNewElement := _this.nodeList.InsertAfter(aNewNode, _this.nodeList.Back())
+		_this.nodeMapByUUID[aNewUUID] = aNewElement
+		defer aNewNode.lock.Unlock()
+		defer _this.lock.Unlock()
+		return aNewNode, nil
 	}
-	_, ok = _this.nodeMapByName[name]
-	if ok {
-		return nil, errGlobalDeviceTreeHasSameName
-	}
-	aNewNode := &node{
-		lock:     new(sync.RWMutex),
-		im:       aNewUUID,
-		subNodes: []uuid.UUID{},
-		useable:  true,
-	}
-	aNewElement := _this.nodeList.InsertAfter(aNewNode, _this.nodeList.Front())
-	_this.nodeMapByName[name] = aNewElement
-	_this.nodeMapByUUID[aNewUUID] = aNewElement
-	defer aNewNode.lock.Unlock()
-	defer _this.lock.Unlock()
-	return aNewNode, nil
 }
 
 func (_this *_globalDeviceTree) deleteNode(target *node) error {
@@ -53,12 +46,24 @@ func (_this *_globalDeviceTree) deleteNode(target *node) error {
 	_this.lock.Lock()
 	defer _this.lock.Unlock()
 	defer target.lock.Unlock()
-	element, ok := _this.nodeMapByUUID[target.im]
-	if !ok {
+	if element, ok := _this.nodeMapByUUID[target.im]; !ok {
 		return errGlobalDeviceTreeDontHaveThisNode
+	} else {
+		_this.nodeList.Remove(element)
+		delete(_this.nodeMapByUUID, target.im)
+		target.useable = false
 	}
-	_this.nodeList.Remove(element)
 	return nil
+}
+
+func (_this *_globalDeviceTree) lookupNodeByUUID(uuid uuid.UUID) (res *node, err error) {
+	_this.lock.RLock()
+	defer _this.lock.RUnlock()
+	if tmp, ok := _this.nodeMapByUUID[uuid]; ok {
+		return nil, errGlobalDeviceTreeDontHaveThisNode
+	} else {
+		return tmp.Value.(*node), nil
+	}
 }
 
 type node struct {
@@ -68,4 +73,9 @@ type node struct {
 	subNodes   []uuid.UUID
 	useable    bool
 	driver     Driver
+	name       string
+}
+
+func (_this *node) check() bool {
+	return _this.useable
 }
