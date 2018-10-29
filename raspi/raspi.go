@@ -48,10 +48,5 @@ func getBoardRevision() (string, error) {
 var Raspi _raspi
 
 type _raspi struct {
-	lock        sync.RWMutex
-	digitalPins map[int]*DigitalPin
-}
-
-func (_this *_raspi) ExportDigitalPin(pin string) *DigitalPin {
-	return nil
+	lock sync.RWMutex
 }
