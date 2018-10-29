@@ -68,7 +68,6 @@ func (_this *_raspi) isRealPinExported(pin uint8) bool {
 	return ok
 }
 
-// https://www.kernel.org/doc/Documentation/gpio/sysfs.txt
 func (_this *_raspi) ExportPin(pin uint8) (res *DigitalPin, err error) {
 	if realPin, pinErr := translatePin(pin); pinErr != nil {
 		return nil, errNorAValidPin
@@ -123,6 +122,7 @@ func (_this *_raspi) UnExportPin(pin uint8) error {
 		if _, fileErr = os.Stat(pinObj.gpioDirectoryPath); os.IsExist(fileErr) {
 			return fileErr
 		}
+		delete(_this.exportedPin.pins, realPin)
 		return nil
 	}
 }

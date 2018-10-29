@@ -6,45 +6,22 @@ import (
 )
 
 const (
-	IN       = "in"
-	OUT      = "out"
+	//IN       = "in"
+	//OUT      = "out"
+	IN       = 0
+	OUT      = 1
 	HIGH     = 1
 	LOW      = 0
 	GPIOPATH = "/sys/class/gpio/"
 )
 
-var errNotExported = errors.New("pin has not been exported")
+var ErrNotExported = errors.New("Pin has not been exported")
+var ErrPinModeNotSatisfy = errors.New("Mode of pin is not satisfy for the request")
+var ErrInvalidValue = errors.New("Value is invalid")
+var ErrInvalidMode = errors.New("mode is invalid")
 
 type DigitalPin struct {
 	gpioDirectoryPath string
 	realPin           uint8
 	lock              *sync.Mutex
-}
-
-func (_this *DigitalPin) check() bool {
-	return Raspi.isRealPinExported(_this.realPin)
-}
-
-func (_this *DigitalPin) DigitalWrite(pin, value uint8) error {
-	if !_this.check() {
-		return errNotExported
-	} else {
-		return nil
-	}
-}
-
-func (_this *DigitalPin) DigitalRead(pin uint8) error {
-	if !_this.check() {
-		return errNotExported
-	} else {
-		return nil
-	}
-}
-
-func (_this *DigitalPin) PinMode(pin uint8, mode uint8) error {
-	if !_this.check() {
-		return errNotExported
-	} else {
-		return nil
-	}
 }
