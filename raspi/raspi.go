@@ -3,6 +3,7 @@ package raspi
 import (
 	"errors"
 	"io/ioutil"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -20,6 +21,10 @@ func init() {
 		panic(err)
 	} else {
 		revision = tmpRevision
+		Raspi = new(_raspi)
+		Raspi.lock = new(sync.RWMutex)
+		Raspi.exportedPin.lock = new(sync.RWMutex)
+		Raspi.exportedPin.pins = make(map[uint8]*DigitalPin)
 		return
 	}
 }
@@ -45,8 +50,78 @@ func getBoardRevision() (string, error) {
 	return emptyString, errRevisonNotFound
 }
 
-var Raspi _raspi
+var Raspi *_raspi
 
 type _raspi struct {
-	lock sync.RWMutex
+	lock        *sync.RWMutex
+	exportedPin *struct {
+		lock *sync.RWMutex
+		pins map[uint8]*DigitalPin
+	}
+}
+
+func (_this *_raspi) isRealPinExported(pin uint8) bool {
+	_this.exportedPin.lock.RLock()
+	defer _this.exportedPin.lock.RUnlock()
+
+	_, ok := _this.exportedPin.pins[pin]
+	return ok
+}
+
+func (_this *_raspi) ExportPin(pin uint8) (res *DigitalPin, err error) {
+	if realPin, pinErr := translatePin(pin); pinErr != nil {
+		return nil, errNorAValidPin
+	} else {
+		_this.exportedPin.lock.Lock()
+		defer _this.exportedPin.lock.Unlock()
+		if res, ok := _this.exportedPin.pins[pin]; ok {
+			return res, nil
+		}
+		gpioFile, fileErr := os.Open(GPIOPATH + "export")
+		defer gpioFile.Close()
+		if fileErr != nil {
+			return nil, fileErr
+		}
+		_, fileErr = gpioFile.Write([]byte(strconv.Itoa(int(realPin))))
+		if fileErr != nil {
+			return nil, fileErr
+		}
+		gpioDirectoryPath := GPIOPATH + "gpio" + strconv.Itoa(int(realPin))
+		if _, fileErr = os.Stat(gpioDirectoryPath); os.IsNotExist(fileErr) {
+			return nil, fileErr
+		}
+		res = &DigitalPin{
+			lock:              new(sync.Mutex),
+			realPin:           realPin,
+			gpioDirectoryPath: gpioDirectoryPath,
+		}
+		_this.exportedPin.pins[realPin] = res
+		return res, nil
+	}
+}
+
+func (_this *_raspi) UnExportPin(pin uint8) error {
+	if realPin, pinErr := translatePin(pin); pinErr != nil {
+		return errNorAValidPin
+	} else {
+		_this.exportedPin.lock.Lock()
+		defer _this.exportedPin.lock.Unlock()
+
+		pinObj := _this.exportedPin.pins[realPin]
+		pinObj.lock.Lock()
+		defer pinObj.lock.Unlock()
+		gpioFile, fileErr := os.Open(GPIOPATH + "unexport")
+		defer gpioFile.Close()
+		if fileErr != nil {
+			return fileErr
+		}
+		_, fileErr = gpioFile.Write([]byte(strconv.Itoa(int(realPin))))
+		if fileErr != nil {
+			return fileErr
+		}
+		if _, fileErr = os.Stat(pinObj.gpioDirectoryPath); os.IsExist(fileErr) {
+			return fileErr
+		}
+		return nil
+	}
 }
