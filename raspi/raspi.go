@@ -51,3 +51,7 @@ type _raspi struct {
 	lock        sync.RWMutex
 	digitalPins map[int]*DigitalPin
 }
+
+func (_this *_raspi) ExportDigitalPin(pin string) *DigitalPin {
+	return nil
+}
