@@ -1,7 +1,7 @@
 package main
 
 import (
-	"backend/raspi" //The package invoke panic if you are not using RaspberryPi or don't have RIGHT permisson!!!
+	"backend/raspi" //The package will invokes panic if you are not using RaspberryPi or don't have RIGHT permisson!!!
 	"fmt"
 )
 
