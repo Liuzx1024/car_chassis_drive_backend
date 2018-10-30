@@ -6,29 +6,77 @@ import (
 	"strconv"
 )
 
-func generateGpioDirectoryPath(pin uint8) string {
-	return GPIOPATH + "gpio" + pinTostring(pin)
+func generateGPIODirectoryFilePath(pin uint8) string {
+	return _GPIOClassPath + "gpio" + pinUint8ToString(pin) + "/"
 }
 
-func pinTostring(pin uint8) string {
+func generateGpioValueFilePath(pin uint8) string {
+	return generateGPIODirectoryFilePath(pin) + "value"
+}
+
+func generateGpioDirectionFilePath(pin uint8) string {
+	return generateGPIODirectoryFilePath(pin) + "direction"
+}
+
+const _GPIOExportFilePath = _GPIOClassPath + "export"
+const _GPIOUnexportFilePath = _GPIOClassPath + "unexport"
+
+func pinUint8ToString(pin uint8) string {
 	return strconv.Itoa(int(pin))
 }
 
-func modeToString(mode uint8) (string, error) {
+func modeUint8ToString(mode uint8) (string, error) {
 	switch mode {
 	case 0:
 		return "in", nil
 	case 1:
 		return "out", nil
 	default:
-		return "", ErrInvalidMode
+		return "", ErrInvalidPinMode
+	}
+}
+
+func modeStringToUint8(mode string) (uint8, error) {
+	switch mode {
+	case "in":
+		return IN, nil
+	case "out":
+		return OUT, nil
+	default:
+		return IN, ErrInvalidPinMode
+	}
+}
+
+func valueStringToUint8(value string) (uint8, error) {
+	tmp, err := strconv.Atoi(value)
+	if err != nil {
+		return LOW, err
+	}
+	switch uint8(tmp) {
+	case LOW:
+		return LOW, nil
+	case HIGH:
+		return HIGH, nil
+	default:
+		return LOW, ErrInvalidPinValue
+	}
+}
+
+func valueUint8ToString(value uint8) (string, error) {
+	switch uint8(value) {
+	case LOW:
+		return "LOW", nil
+	case HIGH:
+		return "HIGH", nil
+	default:
+		return "", ErrInvalidPinValue
 	}
 }
 
 // Only use these functions in a critical scope!!!
 // https://www.kernel.org/doc/Documentation/gpio/sysfs.txt
 func exportPin(pin uint8) error {
-	exportFile, err := os.OpenFile(GPIOPATH+"/export", os.O_WRONLY, os.ModeType)
+	exportFile, err := os.OpenFile(_GPIOExportFilePath, os.O_WRONLY, os.ModeType)
 	defer func() {
 		if exportFile != nil {
 			exportFile.Close()
@@ -37,7 +85,7 @@ func exportPin(pin uint8) error {
 	if err != nil {
 		return err
 	}
-	_, err = exportFile.WriteString(pinTostring(pin))
+	_, err = exportFile.WriteString(pinUint8ToString(pin))
 	if err != nil {
 		return err
 	}
@@ -45,7 +93,7 @@ func exportPin(pin uint8) error {
 }
 
 func unexportPin(pin uint8) error {
-	unexportFile, err := os.OpenFile(GPIOPATH+"/unexport", os.O_WRONLY, os.ModeType)
+	unexportFile, err := os.OpenFile(_GPIOUnexportFilePath, os.O_WRONLY, os.ModeType)
 	defer func() {
 		if unexportFile != nil {
 			unexportFile.Close()
@@ -54,7 +102,7 @@ func unexportPin(pin uint8) error {
 	if err != nil {
 		return err
 	}
-	_, err = unexportFile.WriteString(pinTostring(pin))
+	_, err = unexportFile.WriteString(pinUint8ToString(pin))
 	if err != nil {
 		return err
 	}
@@ -62,10 +110,11 @@ func unexportPin(pin uint8) error {
 }
 
 func digitalWrite(pin, value uint8) error {
-	if value != HIGH && value != LOW {
-		return ErrInvalidValue
+	valueString, err := valueUint8ToString(value)
+	if err != nil {
+		return err
 	}
-	err := ioutil.WriteFile(GPIOPATH+"gpio"+pinTostring(pin)+"/value", []byte(strconv.Itoa(int(value))), os.ModeType)
+	err = ioutil.WriteFile(generateGpioValueFilePath(pin), []byte(valueString), os.ModeType)
 	if err != nil {
 		return err
 	}
@@ -73,36 +122,44 @@ func digitalWrite(pin, value uint8) error {
 }
 
 func digitalRead(pin uint8) (uint8, error) {
-	data, err := ioutil.ReadFile(GPIOPATH + "gpio" + pinTostring(pin) + "/value")
+	data, err := ioutil.ReadFile(generateGpioValueFilePath(pin))
 	if err != nil {
 		return LOW, err
 	}
-	intData, err := strconv.Atoi(string(data))
+	dataUint8, err := valueStringToUint8(string(data))
 	if err != nil {
 		return LOW, err
 	}
-	return uint8(intData), nil
+	return dataUint8, nil
 }
 
-func pinMode(pin uint8, mode uint8) error {
-	modeString, err := modeToString(mode)
+func setPinMode(pin uint8, mode uint8) error {
+	modeString, err := modeUint8ToString(mode)
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile(GPIOPATH+"gpio"+pinTostring(pin)+"/direction", []byte(modeString), os.ModeType)
+	err = ioutil.WriteFile(generateGpioDirectionFilePath(pin), []byte(modeString), os.ModeType)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
+func getPinMode(pin uint8) (uint8, error) {
+	data, err := ioutil.ReadFile(generateGpioDirectionFilePath(pin))
+	if err != nil {
+		return 0, err
+	}
+	return modeStringToUint8(string(data))
+}
+
 func isPinExported(pin uint8) bool {
-	_, err := os.Stat(generateGpioDirectoryPath(pin))
+	_, err := os.Stat(generateGPIODirectoryFilePath(pin))
 	return os.IsExist(err)
 }
 
 func hasRightPermissionToExport() bool {
-	exportFile, err := os.OpenFile(GPIOPATH+"/export", os.O_WRONLY, os.ModeType)
+	exportFile, err := os.OpenFile(_GPIOExportFilePath, os.O_WRONLY, os.ModeType)
 	defer func() {
 		if exportFile != nil {
 			exportFile.Close()
@@ -112,7 +169,7 @@ func hasRightPermissionToExport() bool {
 }
 
 func hasRightPermissionToUnexport() bool {
-	exportFile, err := os.OpenFile(GPIOPATH+"/unexport", os.O_WRONLY, os.ModeType)
+	exportFile, err := os.OpenFile(_GPIOUnexportFilePath, os.O_WRONLY, os.ModeType)
 	defer func() {
 		if exportFile != nil {
 			exportFile.Close()
