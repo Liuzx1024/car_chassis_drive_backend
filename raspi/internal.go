@@ -32,7 +32,7 @@ func modeUint8ToString(mode uint8) (string, error) {
 	case 1:
 		return "out", nil
 	default:
-		return "", ErrInvalidPinMode
+		return emptyString, ErrInvalidPinMode
 	}
 }
 
@@ -43,14 +43,14 @@ func modeStringToUint8(mode string) (uint8, error) {
 	case "out":
 		return OUT, nil
 	default:
-		return IN, ErrInvalidPinMode
+		return emptyValue, ErrInvalidPinMode
 	}
 }
 
 func valueStringToUint8(value string) (uint8, error) {
 	tmp, err := strconv.Atoi(value)
 	if err != nil {
-		return LOW, err
+		return emptyValue, err
 	}
 	switch uint8(tmp) {
 	case LOW:
@@ -58,7 +58,7 @@ func valueStringToUint8(value string) (uint8, error) {
 	case HIGH:
 		return HIGH, nil
 	default:
-		return LOW, ErrInvalidPinValue
+		return emptyValue, ErrInvalidPinValue
 	}
 }
 
@@ -69,7 +69,7 @@ func valueUint8ToString(value uint8) (string, error) {
 	case HIGH:
 		return "HIGH", nil
 	default:
-		return "", ErrInvalidPinValue
+		return emptyString, ErrInvalidPinValue
 	}
 }
 
@@ -124,11 +124,11 @@ func digitalWrite(pin, value uint8) error {
 func digitalRead(pin uint8) (uint8, error) {
 	data, err := ioutil.ReadFile(generateGpioValueFilePath(pin))
 	if err != nil {
-		return LOW, err
+		return emptyValue, err
 	}
 	dataUint8, err := valueStringToUint8(string(data))
 	if err != nil {
-		return LOW, err
+		return emptyValue, err
 	}
 	return dataUint8, nil
 }
@@ -148,7 +148,7 @@ func setPinMode(pin uint8, mode uint8) error {
 func getPinMode(pin uint8) (uint8, error) {
 	data, err := ioutil.ReadFile(generateGpioDirectionFilePath(pin))
 	if err != nil {
-		return 0, err
+		return emptyMode, err
 	}
 	return modeStringToUint8(string(data))
 }

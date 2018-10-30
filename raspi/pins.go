@@ -2,6 +2,8 @@ package raspi
 
 import "errors"
 
+var ErrNorAValidPin = errors.New("Given pin is invalid.")
+
 var pins = map[uint8]map[string]uint8{
 	3: {
 		"1": 0,
@@ -89,16 +91,14 @@ var pins = map[uint8]map[string]uint8{
 	},
 }
 
-var ErrNorAValidPin = errors.New("Not a valid pin")
-
 func translatePin(pin uint8) (res uint8, err error) {
-	if val, ok := pins[pin][revision]; ok {
+	if val, ok := pins[pin][Raspi.GetBoardRevision()]; ok {
 		res = val
 		return
 	} else if val, ok := pins[pin]["*"]; ok {
 		res = val
 		return
 	} else {
-		return res, ErrNorAValidPin
+		return emptyResult, ErrNorAValidPin
 	}
 }

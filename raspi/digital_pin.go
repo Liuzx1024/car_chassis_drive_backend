@@ -13,10 +13,9 @@ const (
 	_GPIOClassPath = "/sys/class/gpio/"
 )
 
-var ErrPinNotExported = errors.New("Pin has not been exported")
-var ErrPinModeNotSatisfy = errors.New("Mode of pin is not satisfy for the request")
-var ErrInvalidPinValue = errors.New("Value is invalid")
-var ErrInvalidPinMode = errors.New("mode is invalid")
+var ErrPinNotExported = errors.New("Given pin has not been exported.")
+var ErrInvalidPinValue = errors.New("Given value is invalid.")
+var ErrInvalidPinMode = errors.New("Given mode is invalid.")
 
 type DigitalPin struct {
 	realPin uint8
@@ -39,7 +38,7 @@ func (_this *DigitalPin) DigitalRead() (uint8, error) {
 	defer _this.lock.Unlock()
 
 	if !isPinExported(_this.realPin) || !_this.useable {
-		return 0, ErrPinNotExported
+		return emptyValue, ErrPinNotExported
 	}
 	return digitalRead(_this.realPin)
 }
@@ -59,7 +58,13 @@ func (_this *DigitalPin) GetPinMode() (uint8, error) {
 	_this.lock.Lock()
 	defer _this.lock.Unlock()
 	if !isPinExported(_this.realPin) || !_this.useable {
-		return 0, ErrPinNotExported
+		return emptyMode, ErrPinNotExported
 	}
 	return getPinMode(_this.realPin)
+}
+
+func (_this *DigitalPin) IsUseAble() bool {
+	_this.lock.Lock()
+	defer _this.lock.Unlock()
+	return _this.useable
 }
