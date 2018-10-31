@@ -14,3 +14,5 @@ type Reponse struct {
 	status string
 	result string
 }
+
+var _FINISHSignal string

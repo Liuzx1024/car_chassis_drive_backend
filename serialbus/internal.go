@@ -2,10 +2,7 @@ package serialbus
 
 import (
 	"encoding/json"
-	"fmt"
 )
-
-var _FINISHSignal string
 
 func init() {
 	emptyStruct := struct{}{}
@@ -14,5 +11,4 @@ func init() {
 		panic(err)
 	}
 	_FINISHSignal = string(b)
-	fmt.Println(_FINISHSignal)
 }
