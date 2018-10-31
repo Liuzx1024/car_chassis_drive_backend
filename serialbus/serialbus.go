@@ -1,10 +1,13 @@
 package serialbus
 
-import "errors"
+import (
+	"errors"
+)
 
 type SerialBus struct {
-	m *Master
-	s []*Slave
+	m              *Master
+	s              []*Slave
+	signalToWorker chan int
 }
 
 var ErrBadPointer = errors.New("Given pointer is nil")
@@ -24,3 +27,9 @@ func NewSerialBus(master *Master, slaves ...*Slave) (*SerialBus, error) {
 	}
 	return nil, nil
 }
+
+func (_this *SerialBus) worker() {}
+
+func (_this *SerialBus) Start() {}
+
+func (_this *SerialBus) Stop() {}

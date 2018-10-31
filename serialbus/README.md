@@ -27,16 +27,12 @@
 ```json
 {
     "id": "8aa74234-e004-4295-b753-81ba8514de3d",
-    "task":
-        {
-            "device": "Ultrasonic sensor",
-            "operation": "read",
-            "parameter": ""
-        }
+    "device": "Ultrasonic sensor",
+    "operation": "read",
+    "parameter": ""
 }
 ```
 * id:a UUID string,to identify a task
-* task:the content of a task
 * device:name of a device
 * operation:name of a operation to do to a device
 * parameter:parameter of a operation
