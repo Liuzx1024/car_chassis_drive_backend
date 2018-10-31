@@ -64,8 +64,8 @@ func (_this *_raspi) ExportPin(pin uint8) (*DigitalPin, error) {
 	}
 
 	err = exportPin(realPin)
-	if !isPinExported(realpin){
-		return err
+	if !isPinExported(realPin) {
+		return nil, err
 	}
 
 	tmpPtr := &DigitalPin{
@@ -83,9 +83,9 @@ func (_this *_raspi) UnexportPin(pin uint8) error {
 	defer _this.gpioMapMutex.Unlock()
 	if tmpPtr, ok := _this.gpioMap[pin]; !ok {
 		return ErrPinNotExported
-	} else { 
-		err:=unexportPin(tmpPtr.realPin)
-		if  isPinExported(tmpPtr.realPin){
+	} else {
+		err := unexportPin(tmpPtr.realPin)
+		if isPinExported(tmpPtr.realPin) {
 			return err
 		}
 		tmpPtr.lock.Lock()
@@ -119,5 +119,5 @@ func init() {
 	}
 	Raspi.gpioMapMutex = new(sync.RWMutex)
 	Raspi.gpioMap = make(map[uint8]*DigitalPin)
-	ioMutex=new(sync.Mutex)
+	ioMutex = new(sync.Mutex)
 }
