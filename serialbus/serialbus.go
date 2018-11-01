@@ -13,6 +13,7 @@ type SerialBus struct {
 }
 
 var ErrBadPointer = errors.New("Given pointer is nil")
+var ErrMasterHasBeenOpened = errors.New("Given worker has been opened")
 
 const (
 	workerIsNotRunning = iota
@@ -25,6 +26,9 @@ func NewSerialBus(master *Master, slaves ...*Slave) (*SerialBus, error) {
 	}
 	if master == nil {
 		return nil, ErrBadPointer
+	}
+	if master.port != nil {
+		return nil, ErrMasterHasBeenOpened
 	}
 	for _, ptr := range slaves {
 		if ptr == nil {
@@ -39,6 +43,11 @@ func NewSerialBus(master *Master, slaves ...*Slave) (*SerialBus, error) {
 const defaultDelayTime = time.Millisecond
 
 func (_this *SerialBus) worker() {
+	defer atomic.StoreInt64(&_this.workerStatus, workerIsNotRunning)
+	if err := _this.m.open(); err != nil {
+		return
+	}
+	defer _this.m.close()
 	timer := time.NewTimer(defaultDelayTime)
 	for {
 		timer.Reset(defaultDelayTime)
