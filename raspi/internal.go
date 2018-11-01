@@ -7,19 +7,19 @@ import (
 )
 
 func generateGPIODirectoryFilePath(pin uint8) string {
-	return _GPIOClassPath + "gpio" + pinUint8ToString(pin) + "/"
+	return _GPIOClassPath + "/gpio" + pinUint8ToString(pin)
 }
 
 func generateGpioValueFilePath(pin uint8) string {
-	return generateGPIODirectoryFilePath(pin) + "value"
+	return generateGPIODirectoryFilePath(pin) + "/value"
 }
 
 func generateGpioDirectionFilePath(pin uint8) string {
-	return generateGPIODirectoryFilePath(pin) + "direction"
+	return generateGPIODirectoryFilePath(pin) + "/direction"
 }
 
-const _GPIOExportFilePath = _GPIOClassPath + "export"
-const _GPIOUnexportFilePath = _GPIOClassPath + "unexport"
+const _GPIOExportFilePath = _GPIOClassPath + "/export"
+const _GPIOUnexportFilePath = _GPIOClassPath + "/unexport"
 
 func pinUint8ToString(pin uint8) string {
 	return strconv.Itoa(int(pin))
@@ -27,9 +27,9 @@ func pinUint8ToString(pin uint8) string {
 
 func modeUint8ToString(mode uint8) (string, error) {
 	switch mode {
-	case 0:
+	case IN:
 		return "in", nil
-	case 1:
+	case OUT:
 		return "out", nil
 	default:
 		return emptyString, ErrInvalidPinMode
@@ -65,9 +65,9 @@ func valueStringToUint8(value string) (uint8, error) {
 func valueUint8ToString(value uint8) (string, error) {
 	switch uint8(value) {
 	case LOW:
-		return "LOW", nil
+		return "1", nil
 	case HIGH:
-		return "HIGH", nil
+		return "0", nil
 	default:
 		return emptyString, ErrInvalidPinValue
 	}
@@ -126,7 +126,7 @@ func digitalRead(pin uint8) (uint8, error) {
 	if err != nil {
 		return emptyValue, err
 	}
-	dataUint8, err := valueStringToUint8(string(data))
+	dataUint8, err := valueStringToUint8(string(data[:1]))
 	if err != nil {
 		return emptyValue, err
 	}
@@ -155,7 +155,7 @@ func getPinMode(pin uint8) (uint8, error) {
 
 func isPinExported(pin uint8) bool {
 	_, err := os.Stat(generateGPIODirectoryFilePath(pin))
-	return os.IsExist(err)
+	return !os.IsNotExist(err)
 }
 
 func hasRightPermissionToExport() bool {

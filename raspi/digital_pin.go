@@ -15,7 +15,7 @@ const (
 	// LOW pin value LOW
 	LOW = 0
 
-	_GPIOClassPath = "/sys/class/gpio/"
+	_GPIOClassPath = "/sys/class/gpio"
 )
 
 // Errors that are used by the package
