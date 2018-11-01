@@ -17,10 +17,10 @@ const (
 	cpuinfoFile = "/proc/cpuinfo"
 )
 
-var errRevisonNotFound = errors.New("Can't find revision")
+var errVersionNotFound = errors.New("Can't find revision")
 var errProcessDontHaveRightPermission = errors.New("Process dont't have right permission")
 
-func getBoardRevision() (string, error) {
+func getBoardVersion() (string, error) {
 	content, err := ioutil.ReadFile(cpuinfoFile)
 	if err != nil {
 		return emptyString, err
@@ -38,18 +38,18 @@ func getBoardRevision() (string, error) {
 			}
 		}
 	}
-	return emptyString, errRevisonNotFound
+	return emptyString, errVersionNotFound
 }
 
 type _raspi struct {
-	revision     string
+	version      string
 	gpioMapMutex *sync.RWMutex
 	gpioMap      map[uint8]*DigitalPin
 }
 
-//GetBoardRevision
-func (_this _raspi) GetBoardRevision() string {
-	return _this.revision
+//GetBoardVersion
+func (_this _raspi) GetBoardVersion() string {
+	return _this.version
 }
 
 //ExportPin
@@ -66,7 +66,7 @@ func (_this *_raspi) ExportPin(pin uint8) (*DigitalPin, error) {
 	// When a real pin is already exported...
 	if tmpPtr, ok := _this.gpioMap[pin]; ok {
 		// Try to fix this situation:
-		// Other application has unexported the pin
+		// Another application unexported the pin
 		if !isPinExported(tmpPtr.realPin) {
 			err = exportPin(tmpPtr.realPin)
 			if !isPinExported(tmpPtr.realPin) {
@@ -114,15 +114,7 @@ func (_this *_raspi) UnexportPin(pin uint8) error {
 		tmpPtr.useable = false
 		tmpPtr.lock.Unlock()
 		delete(_this.gpioMap, pin)
-	}
-	return nil
-}
-
-func (_this _raspi) GetDigitalPin(pin uint8) (*DigitalPin, error) {
-	if tmpPtr, ok := _this.gpioMap[pin]; !ok {
-		return nil, ErrPinNotExported
-	} else {
-		return tmpPtr, nil
+		return nil
 	}
 }
 
@@ -134,10 +126,10 @@ func init() {
 		panic(errProcessDontHaveRightPermission)
 	}
 	Raspi = new(_raspi)
-	if revision, err := getBoardRevision(); err != nil {
+	if version, err := getBoardVersion(); err != nil {
 		panic(err) //If the program is not runnning on RaspberryPi,then invokes panic()
 	} else {
-		Raspi.revision = revision
+		Raspi.version = version
 	}
 	Raspi.gpioMapMutex = new(sync.RWMutex)
 	Raspi.gpioMap = make(map[uint8]*DigitalPin)

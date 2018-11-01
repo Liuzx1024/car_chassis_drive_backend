@@ -42,7 +42,10 @@ func (_this *DigitalPin) DigitalWrite(value uint8) error {
 	defer _this.lock.Unlock()
 
 	if !isPinExported(_this.realPin) || !_this.useable {
-		return ErrPinNotExported
+		exportPin(_this.realPin)
+		if !isPinExported(_this.realPin) {
+			return ErrPinNotExported
+		}
 	}
 	return digitalWrite(_this.realPin, value)
 }
@@ -53,7 +56,10 @@ func (_this *DigitalPin) DigitalRead() (uint8, error) {
 	defer _this.lock.Unlock()
 
 	if !isPinExported(_this.realPin) || !_this.useable {
-		return emptyValue, ErrPinNotExported
+		exportPin(_this.realPin)
+		if !isPinExported(_this.realPin) {
+			return emptyValue, ErrPinNotExported
+		}
 	}
 	return digitalRead(_this.realPin)
 }
@@ -64,9 +70,11 @@ func (_this *DigitalPin) SetPinMode(mode uint8) error {
 	defer _this.lock.Unlock()
 
 	if !isPinExported(_this.realPin) || !_this.useable {
-		return ErrPinNotExported
+		exportPin(_this.realPin)
+		if !isPinExported(_this.realPin) {
+			return ErrPinNotExported
+		}
 	}
-
 	return setPinMode(_this.realPin, mode)
 }
 
@@ -75,7 +83,10 @@ func (_this *DigitalPin) GetPinMode() (uint8, error) {
 	_this.lock.Lock()
 	defer _this.lock.Unlock()
 	if !isPinExported(_this.realPin) || !_this.useable {
-		return emptyMode, ErrPinNotExported
+		exportPin(_this.realPin)
+		if !isPinExported(_this.realPin) {
+			return emptyMode, ErrPinNotExported
+		}
 	}
 	return getPinMode(_this.realPin)
 }
@@ -84,5 +95,14 @@ func (_this *DigitalPin) GetPinMode() (uint8, error) {
 func (_this *DigitalPin) IsUseAble() bool {
 	_this.lock.Lock()
 	defer _this.lock.Unlock()
-	return _this.useable
+	if _this.useable {
+		if !isPinExported(_this.realPin) {
+			exportPin(_this.realPin)
+			if !isPinExported(_this.realPin) {
+				return false
+			}
+		}
+		return true
+	}
+	return false
 }
