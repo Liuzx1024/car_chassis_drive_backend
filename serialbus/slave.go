@@ -2,7 +2,9 @@ package serialbus
 
 import (
 	"backend/raspi"
+	"bufio"
 	"bytes"
+	"errors"
 	"io"
 	"sync"
 )
@@ -21,15 +23,35 @@ func (_this *Slave) unsetCE() error {
 	return _this.ce.DigitalWrite(raspi.HIGH)
 }
 
-func (_this *Slave) readData(Reader io.Reader) error {
-	//TODO:Need to be implemented
+var errFINISHSignalNotFound = errors.New("FINISH signal not found")
+
+func (_this *Slave) readData(r io.Reader) error {
+	_this.recvBufMutex.Lock()
+	defer _this.recvBufMutex.Unlock()
+	pr, pw := io.Pipe()
+	go _this.recvBuf.ReadFrom(pr)
+	sc := bufio.NewScanner(r)
+	sc.Split(func(data []byte, atEOF bool) (advance int, token []byte, err error) {
+		pw.Write(data)
+		if bytes.Contains(data, []byte(_FINISHSignal)) {
+			return len(_FINISHSignal), []byte(_FINISHSignal), nil
+		} else if atEOF {
+			return 0, []byte{}, errFINISHSignalNotFound
+		}
+		return 0, nil, nil
+	})
+	for sc.Scan() {
+	}
+	pw.Close()
+	if sc.Err() != nil {
+		return errFINISHSignalNotFound
+	}
 	return nil
 }
 
 func (_this *Slave) sendData(w io.Writer) error {
 	_this.sendBufMutex.RLock()
 	defer _this.sendBufMutex.RUnlock()
-
 	_, err := _this.sendBuf.WriteTo(w)
 	if err != nil {
 		return err
