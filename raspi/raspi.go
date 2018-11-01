@@ -17,8 +17,8 @@ const (
 	cpuinfoFile = "/proc/cpuinfo"
 )
 
-var errRevisonNotFound = errors.New("Can't find revision.")
-var errProcessDontHaveRightPermission = errors.New("Process dont't have right permission.")
+var errRevisonNotFound = errors.New("Can't find revision")
+var errProcessDontHaveRightPermission = errors.New("Process dont't have right permission")
 
 func getBoardRevision() (string, error) {
 	content, err := ioutil.ReadFile(cpuinfoFile)
@@ -47,10 +47,12 @@ type _raspi struct {
 	gpioMap      map[uint8]*DigitalPin
 }
 
+//GetBoardRevision
 func (_this _raspi) GetBoardRevision() string {
 	return _this.revision
 }
 
+//ExportPin
 func (_this *_raspi) ExportPin(pin uint8) (*DigitalPin, error) {
 	_this.gpioMapMutex.Lock()
 	defer _this.gpioMapMutex.Unlock()
@@ -94,26 +96,23 @@ func (_this *_raspi) ExportPin(pin uint8) (*DigitalPin, error) {
 	return tmpPtr, nil
 }
 
+//UnexportPin
 func (_this *_raspi) UnexportPin(pin uint8) error {
 	_this.gpioMapMutex.Lock()
 	defer _this.gpioMapMutex.Unlock()
 	if tmpPtr, ok := _this.gpioMap[pin]; !ok {
 		return ErrPinNotExported
 	} else {
-		if isPinExported(pin) {
+		if isPinExported(tmpPtr.realPin) {
 			err := unexportPin(tmpPtr.realPin)
-			if err != nil {
+			if isPinExported(tmpPtr.realPin) {
 				return err
 			}
 		}
-
-		if isPinExported(tmpPtr.realPin) {
-			return errors.New("unexport pin failed.")
-		}
 		tmpPtr.lock.Lock()
-		defer tmpPtr.lock.Unlock()
 		tmpPtr.realPin = emptyPin
 		tmpPtr.useable = false
+		tmpPtr.lock.Unlock()
 		delete(_this.gpioMap, pin)
 	}
 	return nil

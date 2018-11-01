@@ -18,18 +18,25 @@ const (
 	_GPIOClassPath = "/sys/class/gpio"
 )
 
-// Errors that are used by the package
+//Errors that are used by the package
 
-var ErrPinNotExported = errors.New("Given pin has not been exported.")
-var ErrInvalidPinValue = errors.New("Given value is invalid.")
-var ErrInvalidPinMode = errors.New("Given mode is invalid.")
+//ErrPinNotExported
+var ErrPinNotExported = errors.New("Given pin has not been exported")
 
+//ErrInvalidPinMode
+var ErrInvalidPinValue = errors.New("Given value is invalid")
+
+//ErrInvalidPinValue
+var ErrInvalidPinMode = errors.New("Given mode is invalid")
+
+//DigitalPin
 type DigitalPin struct {
 	realPin uint8
 	useable bool
 	lock    *sync.Mutex
 }
 
+//DigitalWrite
 func (_this *DigitalPin) DigitalWrite(value uint8) error {
 	_this.lock.Lock()
 	defer _this.lock.Unlock()
@@ -40,6 +47,7 @@ func (_this *DigitalPin) DigitalWrite(value uint8) error {
 	return digitalWrite(_this.realPin, value)
 }
 
+//DigitalRead
 func (_this *DigitalPin) DigitalRead() (uint8, error) {
 	_this.lock.Lock()
 	defer _this.lock.Unlock()
@@ -50,6 +58,7 @@ func (_this *DigitalPin) DigitalRead() (uint8, error) {
 	return digitalRead(_this.realPin)
 }
 
+//SetPinMode
 func (_this *DigitalPin) SetPinMode(mode uint8) error {
 	_this.lock.Lock()
 	defer _this.lock.Unlock()
@@ -61,6 +70,7 @@ func (_this *DigitalPin) SetPinMode(mode uint8) error {
 	return setPinMode(_this.realPin, mode)
 }
 
+//GetPinMode
 func (_this *DigitalPin) GetPinMode() (uint8, error) {
 	_this.lock.Lock()
 	defer _this.lock.Unlock()
@@ -70,6 +80,7 @@ func (_this *DigitalPin) GetPinMode() (uint8, error) {
 	return getPinMode(_this.realPin)
 }
 
+//IsUseAble
 func (_this *DigitalPin) IsUseAble() bool {
 	_this.lock.Lock()
 	defer _this.lock.Unlock()

@@ -2,7 +2,8 @@ package raspi
 
 import "errors"
 
-var ErrNorAValidPin = errors.New("Given pin is invalid.")
+//ErrNorAValidPin
+var ErrNorAValidPin = errors.New("Given pin is invalid")
 
 var pins = map[uint8]map[string]uint8{
 	3: {
