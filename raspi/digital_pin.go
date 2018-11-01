@@ -6,12 +6,19 @@ import (
 )
 
 const (
-	IN             = 0 //"in"
-	OUT            = 1 //"out"
-	HIGH           = 1
-	LOW            = 0
+	// IN pin mode in
+	IN = 0 //"in"
+	// OUT pin mode out
+	OUT = 1
+	// HIGH pin value HIGH
+	HIGH = 1
+	// LOW pin value LOW
+	LOW = 0
+
 	_GPIOClassPath = "/sys/class/gpio/"
 )
+
+// Errors that are used by the package
 
 var ErrPinNotExported = errors.New("Given pin has not been exported.")
 var ErrInvalidPinValue = errors.New("Given value is invalid.")
