@@ -28,6 +28,7 @@ func main() {
 		panic(err)
 	}
 	fmt.Println(value)
+	fmt.Scanln()
 	err = raspi.Raspi.UnexportPin(3)
 	if err != nil {
 		panic(err)
