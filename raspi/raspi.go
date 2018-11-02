@@ -13,12 +13,13 @@ import (
 )
 
 const (
-	emptyString = ""
-	emptyMode   = 0
-	emptyValue  = 0
-	emptyResult = 0
-	emptyPin    = 0
-	cpuinfoFile = "/proc/cpuinfo"
+	emptyString       = ""
+	emptyMode         = 0
+	emptyValue        = 0
+	emptyResult       = 0
+	emptyPin          = 0
+	enableAutoCleanUp = true
+	cpuinfoFile       = "/proc/cpuinfo"
 )
 
 var errVersionNotFound = errors.New("Can't find revision")
@@ -137,15 +138,17 @@ func init() {
 	}
 	Raspi.gpioMapMutex = new(sync.RWMutex)
 	Raspi.gpioMap = make(map[uint8]*DigitalPin)
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-	go func() {
-		<-sigs
-		fmt.Println()
-		fmt.Println("Raspi is cleanning up...")
-		for key := range Raspi.gpioMap {
-			Raspi.UnexportPin(key)
-		}
-		os.Exit(0)
-	}()
+	if enableAutoCleanUp {
+		sigs := make(chan os.Signal, 1)
+		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+		go func() {
+			<-sigs
+			fmt.Println()
+			fmt.Println("Raspi is cleanning up...")
+			for key := range Raspi.gpioMap {
+				Raspi.UnexportPin(key)
+			}
+			os.Exit(0)
+		}()
+	}
 }
