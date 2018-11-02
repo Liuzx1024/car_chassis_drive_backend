@@ -53,6 +53,8 @@ func NewMaster(config serial.Config) (*Master, error) {
 		config: config,
 		mutex:  new(sync.RWMutex),
 	}
-	obj.close()
+	if err := obj.close(); err != nil {
+		return nil, err
+	}
 	return obj, nil
 }
