@@ -23,7 +23,7 @@ const (
 )
 
 var errVersionNotFound = errors.New("Can't find revision")
-var errProcessDontHaveRightPermission = errors.New("Process dont't have right permission")
+var errProcessDontHaveRightPermission = errors.New("Process dont't have root permission")
 
 func getBoardVersion() (string, error) {
 	content, err := ioutil.ReadFile(cpuinfoFile)
