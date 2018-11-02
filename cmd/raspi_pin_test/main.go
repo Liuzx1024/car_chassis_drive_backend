@@ -5,34 +5,33 @@ import (
 	"fmt"
 )
 
+func panicErr(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
+
 func main() {
 	pin, err := raspi.Raspi.ExportPin(3)
-	if err != nil {
-		panic(err)
-	}
+	panicErr(err)
 	value, err := pin.DigitalRead()
-	if err != nil {
-		panic(err)
-	}
+	panicErr(err)
 	fmt.Println(value)
 	err = pin.SetPinMode(raspi.OUT)
-	if err != nil {
-		panic(err)
-	}
+	panicErr(err)
 	err = pin.DigitalWrite(raspi.LOW)
-	if err != nil {
-		panic(err)
-	}
+	panicErr(err)
 	value, err = pin.DigitalRead()
-	if err != nil {
-		panic(err)
-	}
+	panicErr(err)
 	fmt.Println(value)
 	fmt.Scanln()
 	mode, err := pin.GetPinMode()
 	fmt.Println(mode)
+	err = pin.DigitalWrite(raspi.HIGH)
+	panicErr(err)
+	value, err = pin.DigitalRead()
+	panicErr(err)
+	fmt.Println(value)
 	err = raspi.Raspi.UnexportPin(3)
-	if err != nil {
-		panic(err)
-	}
+	panicErr(err)
 }
