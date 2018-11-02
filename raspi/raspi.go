@@ -41,19 +41,19 @@ func getBoardVersion() (string, error) {
 	return emptyString, errVersionNotFound
 }
 
-type _raspi struct {
+type raspi struct {
 	version      string
 	gpioMapMutex *sync.RWMutex
 	gpioMap      map[uint8]*DigitalPin
 }
 
 //GetBoardVersion
-func (_this _raspi) GetBoardVersion() string {
+func (_this raspi) GetBoardVersion() string {
 	return _this.version
 }
 
 //ExportPin
-func (_this *_raspi) ExportPin(pin uint8) (*DigitalPin, error) {
+func (_this *raspi) ExportPin(pin uint8) (*DigitalPin, error) {
 	_this.gpioMapMutex.Lock()
 	defer _this.gpioMapMutex.Unlock()
 
@@ -97,7 +97,7 @@ func (_this *_raspi) ExportPin(pin uint8) (*DigitalPin, error) {
 }
 
 //UnexportPin
-func (_this *_raspi) UnexportPin(pin uint8) error {
+func (_this *raspi) UnexportPin(pin uint8) error {
 	_this.gpioMapMutex.Lock()
 	defer _this.gpioMapMutex.Unlock()
 	if tmpPtr, ok := _this.gpioMap[pin]; !ok {
@@ -119,13 +119,13 @@ func (_this *_raspi) UnexportPin(pin uint8) error {
 }
 
 // Raspi The Global Raspi pointer is pointed to package's main object
-var Raspi *_raspi
+var Raspi *raspi
 
 func init() {
 	if !hasRightPermissionToExport() || !hasRightPermissionToUnexport() {
 		panic(errProcessDontHaveRightPermission)
 	}
-	Raspi = new(_raspi)
+	Raspi = new(raspi)
 	if version, err := getBoardVersion(); err != nil {
 		panic(err) //If the program is not runnning on RaspberryPi,then invokes panic()
 	} else {
