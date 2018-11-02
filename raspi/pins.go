@@ -2,7 +2,7 @@ package raspi
 
 import "errors"
 
-//ErrNorAValidPin
+//ErrNorAValidPin When a given pin is invalid,this error will be generated.
 var ErrNorAValidPin = errors.New("Given pin is invalid")
 
 var pins = map[uint8]map[string]uint8{

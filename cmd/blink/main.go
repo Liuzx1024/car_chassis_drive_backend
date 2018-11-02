@@ -14,7 +14,7 @@ func dealWithErr(err error) {
 func main() {
 	pin, err := raspi.Raspi.ExportPin(3)
 	dealWithErr(err)
-	err = pin.SetPinMode(raspi.OUT)
+	err = pin.SetPinMode(raspi.OUTPUT)
 	dealWithErr(err)
 	for {
 		err = pin.DigitalWrite(raspi.HIGH)

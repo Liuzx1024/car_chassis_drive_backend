@@ -51,12 +51,12 @@ type raspi struct {
 	gpioMap      map[uint8]*DigitalPin
 }
 
-//GetBoardVersion
+//GetBoardVersion This function return the version of the RaspberryPi that the program running on.It's used for select a right io layout.
 func (_this raspi) GetBoardVersion() string {
 	return _this.version
 }
 
-//ExportPin
+//ExportPin This function exports a pin.The "pin" parameter is the pin number of physical io interface on the board.When the opertion is successful,it return an non-nil pointer pointed to a DigitalPin structure stored in a map inside the global raspi structure and a nil error.
 func (_this *raspi) ExportPin(pin uint8) (*DigitalPin, error) {
 	_this.gpioMapMutex.Lock()
 	defer _this.gpioMapMutex.Unlock()
@@ -67,10 +67,10 @@ func (_this *raspi) ExportPin(pin uint8) (*DigitalPin, error) {
 		return nil, err
 	}
 
-	// When a real pin is already exported...
+	// When a real pin has been already exported and stored in the map...
 	if tmpPtr, ok := _this.gpioMap[pin]; ok {
 		// Try to fix this situation:
-		// Another application unexported the pin
+		// Another application unexported the pin.
 		if !isPinExported(tmpPtr.realPin) {
 			err = exportPin(tmpPtr.realPin)
 			if !isPinExported(tmpPtr.realPin) {
@@ -80,6 +80,7 @@ func (_this *raspi) ExportPin(pin uint8) (*DigitalPin, error) {
 		return tmpPtr, nil
 	}
 
+	//Only call exportPin when it's necessary.
 	if !isPinExported(realPin) {
 		err := exportPin(realPin)
 		if !isPinExported(realPin) {
@@ -100,13 +101,11 @@ func (_this *raspi) ExportPin(pin uint8) (*DigitalPin, error) {
 	return tmpPtr, nil
 }
 
-//UnexportPin
+//UnexportPin This function export a given pin.The "pin" parameter is the pin number of physical io interface on the board.When the opertion is successful,it return nil.
 func (_this *raspi) UnexportPin(pin uint8) error {
 	_this.gpioMapMutex.Lock()
 	defer _this.gpioMapMutex.Unlock()
-	if tmpPtr, ok := _this.gpioMap[pin]; !ok {
-		return ErrPinNotExported
-	} else {
+	if tmpPtr, ok := _this.gpioMap[pin]; ok {
 		if isPinExported(tmpPtr.realPin) {
 			err := unexportPin(tmpPtr.realPin)
 			if isPinExported(tmpPtr.realPin) {
@@ -120,6 +119,7 @@ func (_this *raspi) UnexportPin(pin uint8) error {
 		delete(_this.gpioMap, pin)
 		return nil
 	}
+	return ErrPinNotExported
 }
 
 // Raspi The Global Raspi pointer is pointed to package's main object

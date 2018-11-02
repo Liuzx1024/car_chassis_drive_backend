@@ -5,14 +5,15 @@ import (
 	"sync"
 )
 
+//To satisfy Arduino API
 const (
-	// IN pin mode in
-	IN = 0 //"in"
-	// OUT pin mode out
-	OUT = 1
-	// HIGH pin value HIGH
+	//INPUT pin mode INPUT
+	INPUT = 0 //"in"
+	//OUTPUT pin mode OUTPUT
+	OUTPUT = 1
+	//HIGH pin value HIGH
 	HIGH = 1
-	// LOW pin value LOW
+	//LOW pin value LOW
 	LOW = 0
 
 	_GPIOClassPath = "/sys/class/gpio"
@@ -20,23 +21,23 @@ const (
 
 //Errors that are used by the package
 
-//ErrPinNotExported
+//ErrPinNotExported When a given hasn't been imported,this error will be generated.
 var ErrPinNotExported = errors.New("Given pin has not been exported")
 
-//ErrInvalidPinMode
+//ErrInvalidPinValue When a given value is invalid,this error will be generated.
 var ErrInvalidPinValue = errors.New("Given value is invalid")
 
-//ErrInvalidPinValue
+//ErrInvalidPinMode When a given pin mode is invalid,this error will be generated
 var ErrInvalidPinMode = errors.New("Given mode is invalid")
 
-//DigitalPin
+//DigitalPin This structure represents a digital pin.
 type DigitalPin struct {
 	realPin uint8
 	useable bool
 	lock    *sync.Mutex
 }
 
-//DigitalWrite
+//DigitalWrite This function sets the value of the pin.
 func (_this *DigitalPin) DigitalWrite(value uint8) error {
 	_this.lock.Lock()
 	defer _this.lock.Unlock()
@@ -50,7 +51,7 @@ func (_this *DigitalPin) DigitalWrite(value uint8) error {
 	return digitalWrite(_this.realPin, value)
 }
 
-//DigitalRead
+//DigitalRead This function gets the value of the pin
 func (_this *DigitalPin) DigitalRead() (uint8, error) {
 	_this.lock.Lock()
 	defer _this.lock.Unlock()
@@ -64,7 +65,7 @@ func (_this *DigitalPin) DigitalRead() (uint8, error) {
 	return digitalRead(_this.realPin)
 }
 
-//SetPinMode
+//SetPinMode This function sets the mode of the pin.
 func (_this *DigitalPin) SetPinMode(mode uint8) error {
 	_this.lock.Lock()
 	defer _this.lock.Unlock()
@@ -78,7 +79,7 @@ func (_this *DigitalPin) SetPinMode(mode uint8) error {
 	return setPinMode(_this.realPin, mode)
 }
 
-//GetPinMode
+//GetPinMode This function gets the mode of the pin.
 func (_this *DigitalPin) GetPinMode() (uint8, error) {
 	_this.lock.Lock()
 	defer _this.lock.Unlock()
@@ -91,7 +92,7 @@ func (_this *DigitalPin) GetPinMode() (uint8, error) {
 	return getPinMode(_this.realPin)
 }
 
-//IsUseAble
+//IsUseAble This function checks the pin's status.
 func (_this *DigitalPin) IsUseAble() bool {
 	_this.lock.Lock()
 	defer _this.lock.Unlock()

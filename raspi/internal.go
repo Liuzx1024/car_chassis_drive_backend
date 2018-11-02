@@ -27,9 +27,9 @@ func pinUint8ToString(pin uint8) string {
 
 func modeUint8ToString(mode uint8) (string, error) {
 	switch mode {
-	case IN:
+	case INPUT:
 		return "in", nil
-	case OUT:
+	case OUTPUT:
 		return "out", nil
 	default:
 		return emptyString, ErrInvalidPinMode
@@ -39,9 +39,9 @@ func modeUint8ToString(mode uint8) (string, error) {
 func modeStringToUint8(mode string) (uint8, error) {
 	switch mode {
 	case "in\n":
-		return IN, nil
+		return INPUT, nil
 	case "out\n":
-		return OUT, nil
+		return OUTPUT, nil
 	default:
 		return emptyValue, ErrInvalidPinMode
 	}
@@ -113,6 +113,12 @@ func digitalWrite(pin, value uint8) error {
 	valueString, err := valueUint8ToString(value)
 	if err != nil {
 		return err
+	}
+	if v, _ := getPinMode(pin); v != OUTPUT {
+		err = setPinMode(pin, OUTPUT)
+		if v, _ = getPinMode(pin); v != OUTPUT {
+			return err
+		}
 	}
 	err = ioutil.WriteFile(generateGpioValueFilePath(pin), []byte(valueString), os.ModeType)
 	if err != nil {
