@@ -2,10 +2,14 @@ package raspi
 
 import (
 	"errors"
+	"fmt"
 	"io/ioutil"
+	"os"
+	"os/signal"
 	"strconv"
 	"strings"
 	"sync"
+	"syscall"
 )
 
 const (
@@ -133,4 +137,14 @@ func init() {
 	}
 	Raspi.gpioMapMutex = new(sync.RWMutex)
 	Raspi.gpioMap = make(map[uint8]*DigitalPin)
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		<-sigs
+		fmt.Println("Raspi is cleanning up...")
+		for key := range Raspi.gpioMap {
+			Raspi.UnexportPin(key)
+		}
+		os.Exit(0)
+	}()
 }
