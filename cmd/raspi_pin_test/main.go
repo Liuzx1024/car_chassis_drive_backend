@@ -19,7 +19,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	err = pin.DigitalWrite(raspi.HIGH)
+	err = pin.DigitalWrite(raspi.LOW)
 	if err != nil {
 		panic(err)
 	}
@@ -29,6 +29,8 @@ func main() {
 	}
 	fmt.Println(value)
 	fmt.Scanln()
+	mode, err := pin.GetPinMode()
+	fmt.Println(mode)
 	err = raspi.Raspi.UnexportPin(3)
 	if err != nil {
 		panic(err)

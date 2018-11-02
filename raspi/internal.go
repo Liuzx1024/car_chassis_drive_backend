@@ -38,9 +38,9 @@ func modeUint8ToString(mode uint8) (string, error) {
 
 func modeStringToUint8(mode string) (uint8, error) {
 	switch mode {
-	case "in":
+	case "in\n":
 		return IN, nil
-	case "out":
+	case "out\n":
 		return OUT, nil
 	default:
 		return emptyValue, ErrInvalidPinMode
@@ -65,9 +65,9 @@ func valueStringToUint8(value string) (uint8, error) {
 func valueUint8ToString(value uint8) (string, error) {
 	switch uint8(value) {
 	case LOW:
-		return "1", nil
+		return strconv.Itoa(LOW), nil
 	case HIGH:
-		return "0", nil
+		return strconv.Itoa(HIGH), nil
 	default:
 		return emptyString, ErrInvalidPinValue
 	}
@@ -158,22 +158,9 @@ func isPinExported(pin uint8) bool {
 	return !os.IsNotExist(err)
 }
 
-func hasRightPermissionToExport() bool {
-	exportFile, err := os.OpenFile(_GPIOExportFilePath, os.O_WRONLY, os.ModeType)
-	defer func() {
-		if exportFile != nil {
-			exportFile.Close()
-		}
-	}()
-	return !os.IsPermission(err)
-}
-
-func hasRightPermissionToUnexport() bool {
-	exportFile, err := os.OpenFile(_GPIOUnexportFilePath, os.O_WRONLY, os.ModeType)
-	defer func() {
-		if exportFile != nil {
-			exportFile.Close()
-		}
-	}()
-	return !os.IsPermission(err)
+func hasRightPermission() bool {
+	if os.Getuid() != 0 {
+		return false
+	}
+	return true
 }

@@ -122,7 +122,7 @@ func (_this *raspi) UnexportPin(pin uint8) error {
 var Raspi *raspi
 
 func init() {
-	if !hasRightPermissionToExport() || !hasRightPermissionToUnexport() {
+	if !hasRightPermission() {
 		panic(errProcessDontHaveRightPermission)
 	}
 	Raspi = new(raspi)
