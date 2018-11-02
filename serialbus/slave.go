@@ -25,7 +25,7 @@ func (_this *Slave) unsetCE() error {
 
 var errFINISHSignalNotFound = errors.New("FINISH signal not found")
 
-func (_this *Slave) readData(r io.Reader) error {
+func (_this *Slave) recvData(r io.Reader) error {
 	_this.recvBufMutex.Lock()
 	defer _this.recvBufMutex.Unlock()
 	reader := bufio.NewReader(r)
@@ -56,7 +56,6 @@ func (_this *Slave) sendData(w io.Writer) error {
 }
 
 func (_this *Slave) takeTurn(rw io.ReadWriter) error {
-	//reference to README.md
 	_this.setCE()
 	defer _this.unsetCE()
 	sendErr := make(chan error)
@@ -66,7 +65,7 @@ func (_this *Slave) takeTurn(rw io.ReadWriter) error {
 	}()
 	recvErr := make(chan error)
 	go func() {
-		err := _this.readData(rw)
+		err := _this.recvData(rw)
 		recvErr <- err
 	}()
 	if err := <-sendErr; err != nil {
