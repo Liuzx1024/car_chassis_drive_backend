@@ -141,6 +141,7 @@ func init() {
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		<-sigs
+		fmt.Println()
 		fmt.Println("Raspi is cleanning up...")
 		for key := range Raspi.gpioMap {
 			Raspi.UnexportPin(key)
