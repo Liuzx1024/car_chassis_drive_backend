@@ -4,6 +4,7 @@ import (
 	"backend/raspi"
 	"bufio"
 	"bytes"
+	"encoding/json"
 	"errors"
 	"io"
 	"sync"
@@ -38,6 +39,7 @@ func (_this *Slave) recvData(r io.Reader) error {
 				break
 			}
 			_this.recvBuf.Write(buf)
+			_this.recvBuf.Write([]byte("\n"))
 		}
 	}
 	return nil
@@ -76,9 +78,25 @@ func (_this *Slave) takeTurn(rw io.ReadWriter) error {
 	return nil
 }
 
-func NewSlave(ce *raspi.DigitalPin) (*Slave, error) {
-	if ce == nil {
-		return nil, ErrBadPointer
+func (_this *Slave) StoreJSONMessageToSendBuf(message json.RawMessage) error {
+	_this.sendBufMutex.Lock()
+	defer _this.sendBufMutex.Unlock()
+	_this.sendBuf.Write(message)
+	_this.sendBuf.Write([]byte("\n"))
+	return nil
+}
+
+func (_this *Slave) LoadJSONMessageFromRecvBuf() (json.RawMessage, error) {
+	_this.recvBufMutex.RLock()
+	defer _this.recvBufMutex.RUnlock()
+	raw, _, err := bufio.NewReader(_this.recvBuf).ReadLine()
+	return json.RawMessage(raw), err
+}
+
+func NewSlave(pin uint8) (*Slave, error) {
+	ce, err := raspi.Raspi.ExportPin(pin)
+	if err != nil {
+		return nil, err
 	}
 	if err := ce.SetPinMode(raspi.OUTPUT); err != nil {
 		return nil, err

@@ -12,7 +12,7 @@ type SerialBus struct {
 	workerStatus int64
 }
 
-const _FINISHSignal string = "FINISH\n"
+const _FINISHSignal string = "FINISH"
 
 var ErrBadPointer = errors.New("Given pointer is nil")
 var ErrMasterHasBeenOpened = errors.New("Given worker has been opened")
