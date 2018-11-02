@@ -50,13 +50,16 @@
 * result:result of the operation
 
 ### ***FINISH*** signal
-```json
-{}
 ```
-This is an empty json package
+FINISH
+```
 
 ## Data Flow
 JUST LIKE THIS
 ```
-{/*a json package*/...},{/*a json package*/...},{/*a json package*/...},...,{/*FINISH signal*/}
+{...}\n
+{...}\n
+{...}\n
+...
+FINISH\n
 ```

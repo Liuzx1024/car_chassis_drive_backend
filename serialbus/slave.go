@@ -28,23 +28,17 @@ var errFINISHSignalNotFound = errors.New("FINISH signal not found")
 func (_this *Slave) readData(r io.Reader) error {
 	_this.recvBufMutex.Lock()
 	defer _this.recvBufMutex.Unlock()
-	pr, pw := io.Pipe()
-	go _this.recvBuf.ReadFrom(pr)
-	sc := bufio.NewScanner(r)
-	sc.Split(func(data []byte, atEOF bool) (advance int, token []byte, err error) {
-		pw.Write(data)
-		if bytes.Contains(data, []byte(_FINISHSignal)) {
-			return len(_FINISHSignal), []byte(_FINISHSignal), nil
-		} else if atEOF {
-			return 0, []byte{}, errFINISHSignalNotFound
+	reader := bufio.NewReader(r)
+	for {
+		buf, _, err := reader.ReadLine()
+		if err != nil {
+			return err
+		} else {
+			if string(buf) == _FINISHSignal {
+				break
+			}
+			_this.recvBuf.Write(buf)
 		}
-		return 0, nil, nil
-	})
-	for sc.Scan() {
-	}
-	pw.Close()
-	if sc.Err() != nil {
-		return errFINISHSignalNotFound
 	}
 	return nil
 }
@@ -52,28 +46,32 @@ func (_this *Slave) readData(r io.Reader) error {
 func (_this *Slave) sendData(w io.Writer) error {
 	_this.sendBufMutex.RLock()
 	defer _this.sendBufMutex.RUnlock()
-	_, err := _this.sendBuf.WriteTo(w)
-	if err != nil {
+	if _, err := _this.sendBuf.WriteTo(w); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, _FINISHSignal); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (_this *Slave) sendFINISHSignal(w io.Writer) error {
-	_, err := io.WriteString(w, _FINISHSignal)
-	return err
-}
-
 func (_this *Slave) takeTurn(rw io.ReadWriter) error {
+	//reference to README.md
 	_this.setCE()
 	defer _this.unsetCE()
-	if err := _this.sendData(rw); err != nil {
+	sendErr := make(chan error)
+	go func() {
+		err := _this.sendData(rw)
+		sendErr <- err
+	}()
+	recvErr := make(chan error)
+	go func() {
+		err := _this.readData(rw)
+		recvErr <- err
+	}()
+	if err := <-sendErr; err != nil {
 		return err
-	}
-	if err := _this.sendFINISHSignal(rw); err != nil {
-		return err
-	}
-	if err := _this.readData(rw); err != nil {
+	} else if err = <-recvErr; err != nil {
 		return err
 	}
 	return nil
