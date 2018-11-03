@@ -6,55 +6,27 @@ import (
 )
 
 type Master struct {
-	config serial.Config
-	port   *serial.Port
-	mutex  *sync.RWMutex
+	serial *serial.Serial
+	mutex  *sync.Mutex
 }
 
-func (_this *Master) close() error {
+func (_this *Master) doWithSerial(cb func(serial *serial.Serial) error) error {
 	_this.mutex.Lock()
 	defer _this.mutex.Unlock()
-	if _this.port != nil {
-		err := _this.port.Close()
-		if err != nil {
-			return err
-		}
-		_this.port = nil
-	}
-	return nil
+	return cb(_this.serial)
 }
 
-func (_this *Master) flush() error {
-	_this.mutex.RLock()
-	defer _this.mutex.RUnlock()
-	return _this.port.Flush()
-}
-
-func (_this *Master) open() error {
-	_this.mutex.Lock()
-	defer _this.mutex.Unlock()
-	if _this.port == nil {
-		port, err := serial.OpenPort(_this.config)
-		if err != nil {
-			return err
-		}
-		_this.port = port
-	}
-	return nil
-}
-
-func NewMaster(config serial.Config) (*Master, error) {
-	port, err := serial.OpenPort(config)
+func NewMaster(device string, buadRate int) (*Master, error) {
+	serial, err := serial.NewSerial(device)
 	if err != nil {
 		return nil, err
 	}
-	obj := &Master{
-		port:   port,
-		config: config,
-		mutex:  new(sync.RWMutex),
-	}
-	if err := obj.close(); err != nil {
+	if err := serial.SetBaudrate(buadRate); err != nil {
 		return nil, err
+	}
+	obj := &Master{
+		mutex:  new(sync.Mutex),
+		serial: serial,
 	}
 	return obj, nil
 }

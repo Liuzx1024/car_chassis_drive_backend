@@ -46,21 +46,19 @@ func getBoardVersion() (string, error) {
 	return emptyString, errVersionNotFound
 }
 
-type raspi struct {
-	version      string
-	gpioMapMutex *sync.RWMutex
-	gpioMap      map[uint8]*DigitalPin
-}
+var version string
+var gpioMapMutex *sync.RWMutex
+var gpioMap map[uint8]*DigitalPin
 
 //GetBoardVersion This function return the version of the RaspberryPi that the program running on.It's used for select a right io layout.
-func (_this raspi) GetBoardVersion() string {
-	return _this.version
+func GetBoardVersion() string {
+	return version
 }
 
 //ExportPin This function exports a pin.The "pin" parameter is the pin number of physical io interface on the board.When the opertion is successful,it return an non-nil pointer pointed to a DigitalPin structure stored in a map inside the global raspi structure and a nil error.
-func (_this *raspi) ExportPin(pin uint8) (*DigitalPin, error) {
-	_this.gpioMapMutex.Lock()
-	defer _this.gpioMapMutex.Unlock()
+func ExportPin(pin uint8) (*DigitalPin, error) {
+	gpioMapMutex.Lock()
+	defer gpioMapMutex.Unlock()
 
 	// Get real pin number from a given pin
 	realPin, err := translatePin(pin)
@@ -69,7 +67,7 @@ func (_this *raspi) ExportPin(pin uint8) (*DigitalPin, error) {
 	}
 
 	// When a real pin has been already exported and stored in the map...
-	if tmpPtr, ok := _this.gpioMap[pin]; ok {
+	if tmpPtr, ok := gpioMap[pin]; ok {
 		// Try to fix this situation:
 		// Another application unexported the pin.
 		if !isPinExported(tmpPtr.realPin) {
@@ -98,15 +96,15 @@ func (_this *raspi) ExportPin(pin uint8) (*DigitalPin, error) {
 
 	// Insert the pointer into the map
 	// And return the pointer
-	_this.gpioMap[pin] = tmpPtr
+	gpioMap[pin] = tmpPtr
 	return tmpPtr, nil
 }
 
 //UnexportPin This function export a given pin.The "pin" parameter is the pin number of physical io interface on the board.When the opertion is successful,it return nil.
-func (_this *raspi) UnexportPin(pin uint8) error {
-	_this.gpioMapMutex.Lock()
-	defer _this.gpioMapMutex.Unlock()
-	if tmpPtr, ok := _this.gpioMap[pin]; ok {
+func UnexportPin(pin uint8) error {
+	gpioMapMutex.Lock()
+	defer gpioMapMutex.Unlock()
+	if tmpPtr, ok := gpioMap[pin]; ok {
 		if isPinExported(tmpPtr.realPin) {
 			err := unexportPin(tmpPtr.realPin)
 			if isPinExported(tmpPtr.realPin) {
@@ -117,27 +115,23 @@ func (_this *raspi) UnexportPin(pin uint8) error {
 		tmpPtr.realPin = emptyPin
 		tmpPtr.useable = false
 		tmpPtr.lock.Unlock()
-		delete(_this.gpioMap, pin)
+		delete(gpioMap, pin)
 		return nil
 	}
 	return ErrPinNotExported
 }
 
-// Raspi The Global Raspi pointer is pointed to package's main object
-var Raspi *raspi
-
 func init() {
 	if !hasRightPermission() {
 		panic(errProcessDontHaveRightPermission)
 	}
-	Raspi = new(raspi)
 	if version, err := getBoardVersion(); err != nil {
 		panic(err) //If the program is not runnning on RaspberryPi,then invokes panic()
 	} else {
-		Raspi.version = version
+		version = version
 	}
-	Raspi.gpioMapMutex = new(sync.RWMutex)
-	Raspi.gpioMap = make(map[uint8]*DigitalPin)
+	gpioMapMutex = new(sync.RWMutex)
+	gpioMap = make(map[uint8]*DigitalPin)
 	if enableAutoCleanUp {
 		sigs := make(chan os.Signal, 1)
 		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
@@ -145,8 +139,8 @@ func init() {
 			<-sigs
 			fmt.Println()
 			fmt.Println("Raspi is cleanning up...")
-			for key := range Raspi.gpioMap {
-				Raspi.UnexportPin(key)
+			for key := range gpioMap {
+				UnexportPin(key)
 			}
 			os.Exit(0)
 		}()

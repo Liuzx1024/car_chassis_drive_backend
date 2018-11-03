@@ -93,7 +93,7 @@ var pins = map[uint8]map[string]uint8{
 }
 
 func translatePin(pin uint8) (res uint8, err error) {
-	if val, ok := pins[pin][Raspi.GetBoardVersion()]; ok {
+	if val, ok := pins[pin][GetBoardVersion()]; ok {
 		res = val
 		return
 	} else if val, ok := pins[pin]["*"]; ok {

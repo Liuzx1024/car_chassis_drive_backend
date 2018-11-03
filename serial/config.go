@@ -3,52 +3,32 @@ package serial
 import (
 	"errors"
 	"os"
-	"sync"
 	"time"
 
 	"golang.org/x/sys/unix"
 )
 
-type StopBits byte
-
-const (
-	Stop1 StopBits = 1
-	Stop2 StopBits = 2
-)
-
-type Parity byte
-
-const (
-	ParityNone Parity = 'N'
-	ParityOdd  Parity = 'O'
-	ParityEven Parity = 'E'
-)
-
-const DefaultSize = 8
-
-type Config struct {
+type config struct {
 	name        string
 	baud        int
 	readTimeout time.Duration
 	size        byte
 	parity      Parity
 	stopBits    StopBits
-	mutex       *sync.Mutex
 }
 
-func NewDefaultConfig(name string) (*Config, error) {
+func newDefaultConfig(name string) (*config, error) {
 	if file, err := os.OpenFile(name, os.O_RDWR|unix.O_NOCTTY|unix.O_NONBLOCK, 0666); err != nil {
 		return nil, err
 	} else {
 		file.Close()
 	}
-	return &Config{
+	return &config{
 		name:     name,
 		size:     DefaultSize,
 		parity:   ParityNone,
 		stopBits: Stop1,
 		baud:     115200,
-		mutex:    new(sync.Mutex),
 	}, nil
 }
 
@@ -85,17 +65,14 @@ var bauds = map[int]uint32{
 	4000000: unix.B4000000,
 }
 
-func (_this *Config) SetReadTimeout(time time.Duration) {
-	_this.mutex.Lock()
-	defer _this.mutex.Unlock()
+func (_this *config) setReadTimeout(time time.Duration) error {
 	_this.readTimeout = time
+	return nil
 }
 
 var ErrBadBaud = errors.New("unsuportted baud setting")
 
-func (_this *Config) SetBaud(baud int) error {
-	_this.mutex.Lock()
-	defer _this.mutex.Unlock()
+func (_this *config) setBaud(baud int) error {
 	if _, ok := bauds[baud]; ok != true {
 		return ErrBadBaud
 	}
@@ -105,9 +82,7 @@ func (_this *Config) SetBaud(baud int) error {
 
 var ErrBadSize error = errors.New("unsupported serial data size")
 
-func (_this *Config) SetSize(size byte) error {
-	_this.mutex.Lock()
-	defer _this.mutex.Unlock()
+func (_this *config) setSize(size byte) error {
 	if size < 5 || size > 8 {
 		return ErrBadBaud
 	}
@@ -117,9 +92,7 @@ func (_this *Config) SetSize(size byte) error {
 
 var ErrBadStopBits error = errors.New("unsupported stop bit setting")
 
-func (_this *Config) SetStopBit(stopBits StopBits) error {
-	_this.mutex.Lock()
-	defer _this.mutex.Unlock()
+func (_this *config) setStopBit(stopBits StopBits) error {
 	if stopBits != Stop1 && stopBits != Stop2 {
 		return ErrBadStopBits
 	}
@@ -129,9 +102,7 @@ func (_this *Config) SetStopBit(stopBits StopBits) error {
 
 var ErrBadParity error = errors.New("unsupported parity setting")
 
-func (_this *Config) SetParity(parity Parity) error {
-	_this.mutex.Lock()
-	defer _this.mutex.Unlock()
+func (_this *config) setParity(parity Parity) error {
 	if parity != ParityNone && parity != ParityEven && parity != ParityOdd {
 		return ErrBadParity
 	}

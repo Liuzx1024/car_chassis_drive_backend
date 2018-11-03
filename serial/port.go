@@ -8,19 +8,19 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-type Port struct {
+type port struct {
 	file *os.File
 }
 
-func (_this *Port) Read(b []byte) (n int, err error) {
+func (_this *port) read(b []byte) (n int, err error) {
 	return _this.file.Read(b)
 }
 
-func (_this *Port) Write(b []byte) (n int, err error) {
+func (_this *port) write(b []byte) (n int, err error) {
 	return _this.file.Write(b)
 }
 
-func (_this *Port) Flush() error {
+func (_this *port) flush() error {
 	const TCFLSH = 0x540B
 	_, _, errno := unix.Syscall(
 		unix.SYS_IOCTL,
@@ -35,6 +35,6 @@ func (_this *Port) Flush() error {
 	return errno
 }
 
-func (_this *Port) Close() (err error) {
+func (_this *port) close() (err error) {
 	return _this.file.Close()
 }

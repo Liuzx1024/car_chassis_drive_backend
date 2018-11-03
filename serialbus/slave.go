@@ -96,7 +96,7 @@ func (_this *Slave) LoadJSONMessageFromRecvBuf() (json.RawMessage, error) {
 }
 
 func NewSlave(pin uint8) (*Slave, error) {
-	ce, err := raspi.Raspi.ExportPin(pin)
+	ce, err := raspi.ExportPin(pin)
 	if err != nil {
 		return nil, err
 	}
