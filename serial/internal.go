@@ -9,9 +9,7 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-func openPort(config *Config) (*Port, error) {
-	config.mutex.Lock()
-	defer config.mutex.Unlock()
+func openPort(config Config) (*Port, error) {
 	file, err := os.OpenFile(config.name, unix.O_RDWR|unix.O_NOCTTY|unix.O_NONBLOCK, 0666)
 	if err != nil {
 		if file != nil {
