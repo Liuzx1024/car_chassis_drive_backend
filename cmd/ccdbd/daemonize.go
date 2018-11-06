@@ -1,44 +1,47 @@
 package main
 
 import (
-	"errors"
+	"fmt"
 	"os"
 	"syscall"
 )
 
-var errForkFail = errors.New("syscall fork fail")
+//Copy from https://github.com/9466/daemon/blob/master/daemon.go
+//For god's sake
+func daemon(nochdir, noclose int) (int, error) {
+	// already a daemon
+	if syscall.Getppid() == 1 {
+		/* Change the file mode mask */
+		syscall.Umask(0)
 
-func createDaemon() {
-	if err := createChild(); err != nil {
-		panic(err)
-	}
-	if _, err := syscall.Setsid(); err != nil {
-		panic(err)
-	}
-	if err := createChild(); err != nil {
-		panic(err)
-	}
-	if err := syscall.Chdir("/"); err != nil {
-		panic(err)
-	}
-	syscall.Umask(0)
-	for i := 0; i < 3; i++ {
-		if err := syscall.Close(i); err != nil {
-			panic(err)
+		if nochdir == 0 {
+			os.Chdir("/")
 		}
-	}
-}
 
-func callFork() (uintptr, error) {
-	r1, _, err := syscall.Syscall(syscall.SYS_FORK, 0, 0, 0)
-	return r1, error(err)
-}
-
-func createChild() error {
-	if pid, err := callFork(); err != nil || pid < 0 {
-		return errForkFail
-	} else if pid == 0 {
-		os.Exit(0)
+		return 0, nil
 	}
-	return nil
+
+	files := make([]*os.File, 3, 6)
+	if noclose == 0 {
+		nullDev, err := os.OpenFile("/dev/null", 0, 0)
+		if err != nil {
+			return 1, err
+		}
+		files[0], files[1], files[2] = nullDev, nullDev, nullDev
+	} else {
+		files[0], files[1], files[2] = os.Stdin, os.Stdout, os.Stderr
+	}
+
+	dir, _ := os.Getwd()
+	sysattrs := syscall.SysProcAttr{Setsid: true}
+	attrs := os.ProcAttr{Dir: dir, Env: os.Environ(), Files: files, Sys: &sysattrs}
+
+	proc, err := os.StartProcess(os.Args[0], os.Args, &attrs)
+	if err != nil {
+		return -1, fmt.Errorf("can't create process %s: %s", os.Args[0], err)
+	}
+	proc.Release()
+	os.Exit(0)
+
+	return 0, nil
 }
