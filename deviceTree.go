@@ -1,9 +1,22 @@
 package backend
 
 import (
+	"backend/uuid"
 	"sync"
 )
 
-var nodes *sync.Map
+type node struct {
+}
 
-type node struct{}
+type _nodes struct {
+	nodes map[uuid.UUID]node
+	mutex *sync.Mutex
+}
+
+func (_this *_nodes) NewNode() uuid.UUID {
+	return uuid.UUID{}
+}
+
+func init() {
+
+}
